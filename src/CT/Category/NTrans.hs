@@ -1,9 +1,9 @@
-module CT.NTrans where
+module CT.Category.NTrans where
 
 import Prelude hiding (id, (.))
 import Control.Category
 
-import CT.Morphism
+import CT.Category.Morphism
 
 newtype f ↝ g = Nat { runNat :: forall x. f x -> g x }
 

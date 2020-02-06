@@ -1,4 +1,4 @@
-module CT.Entailment where
+module CT.Category.Entailment where
 
 import Prelude hiding (id, (.))
 import Control.Category

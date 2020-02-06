@@ -1,4 +1,4 @@
-module CT.Hacks where
+module CT.Category.Hacks where
 
 import Unsafe.Coerce
 

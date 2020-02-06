@@ -1,11 +1,11 @@
-module CT.Morphism where
+module CT.Category.Morphism where
 
 import Prelude hiding (id, (.))
 import Control.Category
 
 import FCI
 
-import CT.Entailment
+import CT.Category.Entailment
 
 data Morphism c p a b = Morph { run :: c a => p a b, preserve :: c a ⇒ c b }
 

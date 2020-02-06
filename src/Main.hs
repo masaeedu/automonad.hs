@@ -6,31 +6,14 @@ import Control.Category
 
 import FCI
 
-import CT.NTrans
-import CT.Entailment
+import CT.Category.NTrans
+import CT.Category.Entailment
+import CT.Category.Morphism
 import CT.Functor
-import CT.Morphism
 
 import Derivation.Monad
 
--- An effect class is a functor from the category of monads to a category of constraints
-class GFunctor (Morphism Monad (↝)) (⇒) f => Effect f
-
-mkInst ''Effect
-
--- Classes
-class Monad m => Teletype m where
-  read  :: m String
-  write :: String -> m ()
-
-mkInst ''Teletype
-
-instance GFunctor (Morphism Monad (↝)) (⇒) Teletype where
-  map (Morph { run, preserve }) =
-    Entail $ \(Teletype m r w) -> m ==>
-      Teletype (preserve <$= m) (run <$~ r) ((run <$~) . w)
-
-instance Effect Teletype
+import Effect.Teletype
 
 -- Transformers
 
