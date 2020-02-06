@@ -1,4 +1,4 @@
-module EZMonad where
+module Derivation.Monad where
 
 import FCI
 

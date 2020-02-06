@@ -1,3 +1,4 @@
+{-# LANGUAGE LiberalTypeSynonyms #-}
 module Main where
 
 import Prelude hiding (read, (.), id, map)
@@ -9,7 +10,8 @@ import CT.NTrans
 import CT.Entailment
 import CT.Functor
 import CT.Morphism
-import EZMonad
+
+import Derivation.Monad
 
 -- An effect class is a functor from the category of monads to a category of constraints
 class GFunctor (Morphism Monad (↝)) (⇒) f => Effect f
@@ -23,13 +25,12 @@ class Monad m => Teletype m where
 
 mkInst ''Teletype
 
-effectTeletype :: Inst (Effect Teletype)
-effectTeletype = Effect $ GFunctor inst inst f
-  where
-  f (Morph { run, preserve }) = Entail $
-    \(Teletype m r w) ->
-      m ==>
+instance GFunctor (Morphism Monad (↝)) (⇒) Teletype where
+  map (Morph { run, preserve }) =
+    Entail $ \(Teletype m r w) -> m ==>
       Teletype (preserve <$= m) (run <$~ r) ((run <$~) . w)
+
+instance Effect Teletype
 
 -- Transformers
 
@@ -58,7 +59,7 @@ liftStateT = Morph (Nat $ \ma -> StateT $ \s -> (, s) <$> ma) monadStateT
 
 -- Up to here, no interaction between transformers and classes. Now we put them together
 test :: Teletype f ⇒ Teletype (ReaderT r (StateT s f))
-test = effectTeletype ==> map (liftReaderT . liftStateT)
+test = map (liftReaderT . liftStateT)
 
 main :: IO ()
 main = print "Hello, world!"
