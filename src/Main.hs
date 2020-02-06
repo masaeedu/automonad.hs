@@ -1,7 +1,8 @@
 {-# LANGUAGE TemplateHaskell, TypeFamilies, NoQuantifiedConstraints, NamedFieldPuns, ViewPatterns, TupleSections #-}
 module Main where
 
-import Prelude hiding (read)
+import Prelude hiding (read, (.), id)
+import Control.Category
 
 import FCI
 
@@ -13,6 +14,11 @@ data f ~⋅~> g = MMorph
   { convert :: Inst (Monad f) -> Inst (Monad g)
   , nat :: Monad f => f ~> g
   }
+
+instance Category (~⋅~>)
+  where
+  (MMorph c n) . (MMorph d m) = MMorph (c . d) (\(ma :: m a) -> d (inst @(Monad m)) ==> n $ m ma)
+  id = MMorph id id
 
 class Monad m => Teletype m where
   read  :: m String
@@ -52,7 +58,7 @@ liftStateT :: m ~⋅~> StateT s m
 liftStateT = MMorph monadStateT (\ma -> StateT $ \s -> (, s) <$> ma)
 
 test :: forall r s f. Inst (Teletype f) -> Inst (Teletype (ReaderT r (StateT s f)))
-test = mapTeletype liftReaderT . mapTeletype liftStateT
+test = mapTeletype (liftReaderT . liftStateT)
 
 main :: IO ()
 main = print "Hello, world!"
