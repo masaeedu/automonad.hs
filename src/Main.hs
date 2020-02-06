@@ -21,7 +21,7 @@ class Monad m => Teletype m where
 mkInst ''Teletype
 
 mapTeletype :: (f ~⋅~> g) -> Inst (Teletype f) -> Inst (Teletype g)
-mapTeletype (MMorph { convert, nat }) t@(Teletype m r w) = t ==> Teletype (convert m) (nat r) (nat . w)
+mapTeletype (MMorph { convert, nat }) (Teletype m r w) = m ==> Teletype (convert m) (nat r) (nat . w)
 
 newtype ReaderT r m a = ReaderT { runReaderT :: r -> m a }
 
