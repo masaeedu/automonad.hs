@@ -1,5 +1,5 @@
 spec-version: 0.30.0
-name: fci
+name: automonad
 author: Asad Saeeduddin
 maintainer: masaeedu@gmail.com
 license: MIT
@@ -33,6 +33,7 @@ default-extensions:
   - KindSignatures
 
   - UndecidableInstances
+  - UndecidableSuperClasses
   - FlexibleInstances
   - FlexibleContexts
   - DefaultSignatures

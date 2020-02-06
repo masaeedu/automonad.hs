@@ -14,4 +14,4 @@ instance Category (↝) where
 (<$~) :: a ↝ b -> a x -> b x
 (<$~) = runNat
 
-type f ⤜ g = Morphism Monad (↝) f g
+type (⤜) = (↝) ∋ Monad
