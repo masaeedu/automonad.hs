@@ -1,64 +1,60 @@
-{-# LANGUAGE TemplateHaskell, TypeFamilies, NoQuantifiedConstraints, NamedFieldPuns, ViewPatterns, TupleSections #-}
 module Main where
 
-import Prelude hiding (read, (.), id)
+import Prelude hiding (read, (.), id, map)
 import Control.Category
 
 import FCI
 
+import Categories
 import EZMonad
 
-type f ~> g = forall x. f x -> g x
+class GFunctor (Morphism Monad (↝)) (⇒) f => Effect f
 
-data f ~⋅~> g = MMorph
-  { convert :: Inst (Monad f) -> Inst (Monad g)
-  , nat :: Monad f => f ~> g
-  }
+mkInst ''Effect
 
-instance Category (~⋅~>)
-  where
-  (MMorph c n) . (MMorph d m) = MMorph (c . d) (\(ma :: m a) -> d (inst @(Monad m)) ==> n $ m ma)
-  id = MMorph id id
-
+-- Classes
 class Monad m => Teletype m where
   read  :: m String
   write :: String -> m ()
 
 mkInst ''Teletype
 
-mapTeletype :: (f ~⋅~> g) -> Inst (Teletype f) -> Inst (Teletype g)
-mapTeletype (MMorph { convert, nat }) (Teletype m r w) = m ==> Teletype (convert m) (nat r) (nat . w)
+effectTeletype :: Inst (Effect Teletype)
+effectTeletype = Effect $ GFunctor inst inst f
+  where
+  f (Morph { run, preserve }) = Entail $
+    \(Teletype m r w) ->
+      m ==>
+      Teletype (preserve <$= m) (runNat run r) (runNat run . w)
 
+-- Transformers
+
+-- ReaderT
 newtype ReaderT r m a = ReaderT { runReaderT :: r -> m a }
 
-monadReaderT :: forall r m. Inst (Monad m) -> Inst (Monad (ReaderT r m))
-monadReaderT m = m ==> ezmonad (>>=′) pure'
+monadReaderT :: Monad m ⇒ Monad (ReaderT r m)
+monadReaderT = Entail $ \m -> m ==> ezmonad (>>=′) (ReaderT . pure . pure)
   where
-  (>>=′) :: Monad m => (::>>=) (ReaderT r m)
   (ReaderT ma) >>=′ ((runReaderT .) -> amb) = ReaderT $ \r -> ma r >>= ($ r) . amb
 
-  pure' :: Monad m => Pure (ReaderT r m)
-  pure' = ReaderT . pure . pure
+liftReaderT :: m ⤜ ReaderT r m
+liftReaderT = Morph (Nat $ ReaderT . pure) monadReaderT
 
-liftReaderT :: m ~⋅~> ReaderT r m
-liftReaderT = MMorph monadReaderT (ReaderT . pure)
-
+-- StateT
 newtype StateT s m a = StateT { runStateT :: s -> m (a, s) }
 
-monadStateT :: forall s m. Inst (Monad m) -> Inst (Monad (StateT s m))
-monadStateT m = m ==> ezmonad (>>=′) pure'
+monadStateT :: Monad m ⇒ Monad (StateT s m)
+monadStateT = Entail $ \m -> m ==> ezmonad (>>=′) pure'
   where
-  (>>=′) :: Monad m => (::>>=) (StateT s m)
-  (StateT ma) >>=′ ((runStateT .) -> amb) = StateT $ \s -> ma s >>= \(a, s') -> amb a s'
-
-  pure' :: Monad m => Pure (StateT s m)
+  StateT ma >>=′ ((runStateT .) -> amb) = StateT $ \s -> ma s >>= \(a, s') -> amb a s'
   pure' a = StateT $ \s -> pure (a, s)
 
-liftStateT :: m ~⋅~> StateT s m
-liftStateT = MMorph monadStateT (\ma -> StateT $ \s -> (, s) <$> ma)
+liftStateT :: m ⤜ StateT s m
+liftStateT = Morph (Nat $ \ma -> StateT $ \s -> (, s) <$> ma) monadStateT
 
-test :: forall r s f. Inst (Teletype f) -> Inst (Teletype (ReaderT r (StateT s f)))
-test = mapTeletype (liftReaderT . liftStateT)
+-- Up to here, no interaction between transformers and classes. Now we put them together
+test :: Teletype f ⇒ Teletype (ReaderT r (StateT s f))
+test = effectTeletype ==> map (liftReaderT . liftStateT)
 
 main :: IO ()
 main = print "Hello, world!"

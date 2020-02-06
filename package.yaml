@@ -37,6 +37,13 @@ default-extensions:
   - FlexibleContexts
   - DefaultSignatures
 
+  - TemplateHaskell
+  - TypeFamilies
+  - NoQuantifiedConstraints
+  - NamedFieldPuns
+  - ViewPatterns
+  - TupleSections
+
 library: {}
 executable:
   main: Main.hs
