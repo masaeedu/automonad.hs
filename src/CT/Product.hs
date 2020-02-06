@@ -1,11 +1,11 @@
 {-# LANGUAGE InstanceSigs #-}
-module Category.Product where
+module CT.Product where
 
 import Prelude hiding ((.), id)
 
 import Control.Category
 
-import Category.Hacks
+import CT.Hacks
 
 data (p ∧ q) (a :: (k, k)) (b :: (k, k)) where
   (:×:) :: p a b -> q c d -> (∧) p q '(a, c) '(b, d)

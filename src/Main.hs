@@ -5,9 +5,13 @@ import Control.Category
 
 import FCI
 
-import Categories
+import CT.NTrans
+import CT.Entailment
+import CT.Functor
+import CT.Morphism
 import EZMonad
 
+-- An effect class is a functor from the category of monads to a category of constraints
 class GFunctor (Morphism Monad (↝)) (⇒) f => Effect f
 
 mkInst ''Effect
@@ -25,7 +29,7 @@ effectTeletype = Effect $ GFunctor inst inst f
   f (Morph { run, preserve }) = Entail $
     \(Teletype m r w) ->
       m ==>
-      Teletype (preserve <$= m) (runNat run r) (runNat run . w)
+      Teletype (preserve <$= m) (run <$~ r) ((run <$~) . w)
 
 -- Transformers
 
